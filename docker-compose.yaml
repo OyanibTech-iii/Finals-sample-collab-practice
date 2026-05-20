@@ -1,0 +1,57 @@
+services:
+  platform_docker-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: BienPaci-app
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "9000:8000"
+    environment:
+      APP_ENV: dev
+      APP_SECRET: ${APP_SECRET}
+      DATABASE_URL: "mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@platform_docker-db:3306/${MYSQL_DATABASE}?serverVersion=8.0.32&charset=utf8mb4"
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - platform_docker-db
+    networks:
+      - platform-network
+
+  platform_docker-db:
+    image: mysql:8.0
+    container_name: BienPaci-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3310:3306"
+    volumes:
+      - platform-db-data:/var/lib/mysql
+    networks:
+      - platform-network
+
+  platform_docker-phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: BienPaci-phpmyadmin
+    environment:
+      PMA_HOST: platform_docker-db
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8080:80"
+    depends_on:
+      - platform_docker-db
+    networks:
+      - platform-network
+
+volumes:
+  platform-db-data:
+
+networks:
+  platform-network:
